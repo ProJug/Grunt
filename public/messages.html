@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Messages</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 1.6em;
+    }
+
+    .dm-list {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dm-entry {
+      background: #161b22;
+      padding: 16px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-decoration: none;
+      color: white;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .dm-entry:hover {
+      background: #1f2933;
+      transform: scale(1.01);
+    }
+
+    .dm-name {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+
+    .dm-preview {
+      font-size: 0.9em;
+      color: #aaa;
+      text-align: right;
+      max-width: 50%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .back {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    .back a:hover {
+      text-decoration: underline;
+    }
+
+    .no-dms {
+      font-style: italic;
+      color: #888;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📨 Your Messages</h2>
+
+  <div class="dm-list" id="dmList">Loading...</div>
+
+  <div class="back">
+    <a href="/">← Back to Chat</a>
+  </div>
+
+  <script>
+    fetch('/api/dm-recent')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('dmList');
+        container.innerHTML = '';
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="no-dms">No DMs yet. Your silence is deafening.</div>';
+          return;
+        }
+
+        data.forEach(dm => {
+          const link = document.createElement('a');
+          link.href = `/dm/${dm.username}`;
+          link.className = 'dm-entry';
+
+          const name = document.createElement('div');
+          name.className = 'dm-name';
+          name.textContent = dm.username;
+
+          const preview = document.createElement('div');
+          preview.className = 'dm-preview';
+          preview.textContent = dm.preview || '';
+
+          link.appendChild(name);
+          link.appendChild(preview);
+          container.appendChild(link);
+        });
+      });
+  </script>
+</body>
+</html>

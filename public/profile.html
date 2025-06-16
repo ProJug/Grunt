@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Profile Settings</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+
+    .card {
+      background-color: #161b22;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px black;
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .card input,
+    .card textarea {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #0d1117;
+      color: white;
+      font-size: 1em;
+    }
+
+    .card textarea {
+      resize: none;
+    }
+
+    .btn {
+      background: #238636;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #2ea043;
+      transform: scale(1.03);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+
+    .stats div {
+      text-align: center;
+    }
+
+    .stats strong {
+      font-size: 1.2em;
+    }
+
+    .stats span {
+      color: #8899a6;
+      font-size: 0.85em;
+    }
+
+    .back {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    .back a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <form class="card" id="profileForm" method="POST" action="/save-profile">
+    <h2>📝 Update Your Profile</h2>
+    <input type="text" name="displayName" id="displayName" placeholder="Display Name" />
+    <input type="text" name="handle" id="handle" placeholder="@handle" />
+    <textarea name="bio" id="bio" placeholder="Your bio..." rows="4"></textarea>
+
+    <button type="submit" class="btn">Save Changes</button>
+
+    <div class="stats">
+      <div>
+        <strong id="statPosts">0</strong><br>
+        <span>Grunts</span>
+      </div>
+      <div>
+        <strong id="statFollowing">0</strong><br>
+        <span>Hunted</span>
+      </div>
+      <div>
+        <strong id="statFollowers">0</strong><br>
+        <span>Minions</span>
+      </div>
+    </div>
+
+    <div class="back">
+      <a href="/">← Back to Chat</a>
+    </div>
+  </form>
+
+  <script>
+    fetch('/userdata')
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          location.href = "/signin.html";
+        } else {
+          document.getElementById('displayName').value = data.username;
+          document.getElementById('handle').value = data.handle;
+          document.getElementById('statPosts').textContent = data.posts;
+          document.getElementById('statFollowers').textContent = data.followers;
+          document.getElementById('statFollowing').textContent = data.following;
+          document.getElementById('bio').value = data.bio || '';
+        }
+      });
+  </script>
+</body>
+</html>

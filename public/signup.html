@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Sign Up</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+
+    .card {
+      background: #161b22;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px black;
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: #0d1117;
+      color: white;
+      font-size: 1em;
+    }
+
+    .btn {
+      background: #238636;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #2ea043;
+      transform: scale(1.03);
+    }
+
+    .alt-action {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.95em;
+    }
+
+    .alt-action a {
+      color: #58a6ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .alt-action a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <form method="POST" action="/signup" class="card">
+    <h2>🐵 Join the Grunting</h2>
+    <input name="username" placeholder="Choose a Username" required />
+    <input name="password" type="password" placeholder="Choose a Password" required />
+    <button type="submit" class="btn">Smash Into GoonLair</button>
+    <div class="alt-action">
+      Already grunting? <a href="/signin.html">Return to Cave</a>
+    </div>
+  </form>
+</body>
+</html>

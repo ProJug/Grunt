@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - User Profile</title>
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #161b22;
+      padding: 30px;
+      border-radius: 12px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0 0 10px black;
+    }
+    .profile-pic {
+      width: 70px;
+      height: 70px;
+      background: #1da1f2;
+      color: white;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 2em;
+      margin: auto;
+    }
+    .handle {
+      color: #8899a6;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 15px 0;
+    }
+    .stats div {
+      text-align: center;
+    }
+    .bio {
+      margin: 10px 0 20px;
+      font-style: italic;
+    }
+    form button, .dm-button {
+      background: #238636;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .dm-button {
+      background: #1da1f2;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: block;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+   }
+
+    .back {
+      margin-top: 15px;
+    }
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="profile-pic" id="user-letter">?</div>
+    <h2 id="user-name">Loading...</h2>
+    <div class="handle" id="user-handle">@...</div>
+    <div class="bio" id="user-bio">...</div>
+    <div class="stats">
+      <div><strong id="user-posts">0</strong><br>Posts</div>
+      <div><strong id="user-following">0</strong><br>Following</div>
+      <div><strong id="user-followers">0</strong><br>Followers</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <form method="POST" id="followForm">
+        <button type="submit" id="followBtn">Follow</button>
+      </form>
+      <a id="dmLink" href="#" class="dm-button">Message</a>
+    </div>
+    <div class="back">
+      <a href="/">← Back to Chat</a>
+    </div>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const targetUser = pathParts[pathParts.length - 1];
+
+    fetch(`/api/user/${targetUser}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) return alert("User not found");
+
+        document.getElementById('user-letter').textContent = data.username[0].toUpperCase();
+        document.getElementById('user-name').textContent = data.displayName;
+        document.getElementById('user-handle').textContent = data.handle;
+        document.getElementById('user-bio').textContent = data.bio;
+        document.getElementById('user-posts').textContent = data.posts;
+        document.getElementById('user-following').textContent = data.following;
+        document.getElementById('user-followers').textContent = data.followers;
+        document.getElementById('dmLink').href = `/dm/${data.username}`;
+
+        const form = document.getElementById('followForm');
+        const btn = document.getElementById('followBtn');
+
+        if (data.isFollowing) {
+          btn.textContent = "Stop Stalking";
+          form.action = `/unfollow/${targetUser}`;
+        } else {
+          btn.textContent = "Stalk";
+          form.action = `/follow/${targetUser}`;
+        }
+      })
+      .catch(() => alert("Failed to load user profile"));
+  </script>
+</body>
+</html>

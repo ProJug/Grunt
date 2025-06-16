@@ -1,0 +1,393 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #15202b;
+  color: #e1e8ed;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.container {
+  display: flex;
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sidebar {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.nav-item {
+  display: block;
+  color: #e1e8ed;
+  text-decoration: none;
+  padding: 10px 0;
+  font-size: 1.1em;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #1f2a36;
+  transform: translateX(2px);
+}
+
+.feed {
+  flex: 1;
+  background-color: #192734;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 280px;
+}
+
+.post-box {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.post-box textarea {
+  resize: none;
+  padding: 10px;
+  border-radius: 8px;
+  border: none !important;
+  outline: none !important;
+  background-color: #22303c;
+  color: white;
+  margin-bottom: 10px;
+  font-size: 1em;
+  box-shadow: none;
+}
+
+.post-box textarea::placeholder {
+  color: #888;
+}
+
+.post-box input[type="file"] {
+  background-color: #22303c;
+  color: #ccc;
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+  width: fit-content;
+  margin-bottom: 10px;
+}
+
+.post-box input[type="file"]::file-selector-button {
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-box input[type="file"]::file-selector-button:hover {
+  background-color: #238636;
+}
+
+.post-box button {
+  align-self: flex-end;
+  padding: 8px 16px;
+  background-color: #1da1f2;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.post-box button:hover {
+  background-color: #1a8cd8;
+  transform: scale(1.05);
+}
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  display: flex;
+  gap: 10px;
+  background-color: #22303c;
+  border-radius: 10px;
+  padding: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.message:hover {
+  background-color: #2a3b4c;
+}
+
+.avatar {
+  background-color: #1da1f2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  color: white;
+}
+
+.content .user {
+  font-weight: bold;
+}
+
+.content .text {
+  color: #ccc;
+}
+
+.profile {
+  width: 240px;
+}
+
+.card {
+  background-color: #192734;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #000;
+}
+
+.profile-pic {
+  width: 60px;
+  height: 60px;
+  background-color: #1da1f2;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.5em;
+  color: white;
+  margin-bottom: 10px;
+  transition: box-shadow 0.3s ease;
+}
+
+.profile-pic:hover {
+  box-shadow: 0 0 10px #1da1f2;
+}
+
+.info .name {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.info .handle {
+  color: #8899a6;
+  margin-bottom: 10px;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stats span {
+  color: #8899a6;
+  font-size: 0.85em;
+}
+
+.nav-item.badge::after {
+  content: '•';
+  color: red;
+  margin-left: 6px;
+  font-size: 1.5em;
+  vertical-align: middle;
+}
+
+.connection-status {
+  color: #ccc;
+  font-size: 0.9em;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.desktop-only {
+  display: block;
+}
+
+/* === Threaded Comments === */
+.comments {
+  font-size: 14px;
+  color: #ccc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 10px;
+}
+
+.comment-box {
+  padding: 4px 8px;
+  border-left: 2px solid #333;
+  background-color: #141414;
+  border-radius: 4px;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.comment-header strong {
+  color: #1da1f2;
+  font-size: 14px;
+}
+
+.comment-header span {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.comment-replies {
+  margin-left: 16px;
+  padding-left: 10px;
+  border-left: 1px dashed #444;
+}
+
+.reply-button, .collapse-button {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.reply-button:hover, .collapse-button:hover {
+  color: #fff;
+}
+
+/* === MOBILE NAV + RESPONSIVE LAYOUT === */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 40px;
+  }
+
+  .container {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 10px 0;
+    background: #192734;
+    border-bottom: 1px solid #222;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .nav-links {
+    display: flex;
+    justify-content: space-evenly; /* was space-around */
+    padding: 0 6px;
+  }
+
+
+  .nav-item {
+    flex: 1;
+    padding: 12px 6px;
+    font-size: 1em;
+  }
+
+  .logo,
+  .desktop-only {
+    display: none !important;
+  }
+
+  .feed,
+  .profile {
+    width: 100%;
+  }
+
+  .post-box textarea,
+  .post-box input[type="file"],
+  .post-box button {
+    width: 100%;
+    font-size: 1em;
+    padding: 12px;
+  }
+
+  .post-box input[type="file"] {
+    background: #1a1a1a;
+    color: #ccc;
+    border: 1px solid #333;
+    border-radius: 8px;
+  }
+
+  .post-box input[type="file"]::file-selector-button {
+    background-color: #1da1f2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    font-weight: bold;
+    border-radius: 8px;
+    margin-right: 10px;
+  }
+
+  .messages {
+    gap: 10px;
+  }
+
+  .message {
+    flex-direction: column;
+    padding: 8px;
+  }
+
+  .avatar {
+    margin-bottom: 5px;
+  }
+
+  .card {
+    width: 100% !important;
+    margin-bottom: 20px;
+  }
+
+  .profile-pic {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2em;
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  #adminPanelLink {
+    display: none !important;
+  }
+}

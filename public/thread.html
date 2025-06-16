@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Thread</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .thread-box {
+      background: #161b22;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px black;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 20px;
+    }
+
+    .post {
+      background: #22303c;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .post .user {
+      font-weight: bold;
+      color: #1da1f2;
+      margin-bottom: 5px;
+    }
+
+    .post .text {
+      color: #ccc;
+      margin-bottom: 8px;
+    }
+
+    .post img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    .replies {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .reply {
+      background: #192734;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .reply .from {
+      color: #58a6ff;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .reply .text {
+      color: #ccc;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      background: #0d1117;
+      color: white;
+      border: none;
+      resize: none;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #1da1f2;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1a8cd8;
+      transform: scale(1.03);
+    }
+
+    .back {
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="thread-box">
+    <div class="post" id="mainPost">Loading post...</div>
+
+    <textarea id="replyInput" rows="3" placeholder="Speak grunt here..."></textarea>
+    <button id="replyBtn">Reply to Thread</button>
+
+    <div class="back">
+      <a href="/">← Back to Grunt</a>
+    </div>
+
+    <h3>💬 Replies</h3>
+    <div class="replies" id="repliesList">Loading...</div>
+  </div>
+
+  <script>
+    const threadId = window.location.pathname.split('/').pop();
+    const repliesDiv = document.getElementById('repliesList');
+    const replyInput = document.getElementById('replyInput');
+    const replyBtn = document.getElementById('replyBtn');
+
+    // Load thread post from new API
+    fetch(`/api/post/${threadId}`)
+      .then(res => res.json())
+      .then(post => {
+        const postDiv = document.getElementById('mainPost');
+        if (!post || post.error) {
+          postDiv.innerHTML = '<em>⚠️ Post not found or deleted.</em>';
+          return;
+        }
+
+        postDiv.innerHTML = `
+          <div class="user">${post.username}</div>
+          <div class="text">${post.message}</div>
+          ${post.image ? `<img src="${post.image}">` : ''}
+        `;
+      })
+      .catch(() => {
+        document.getElementById('mainPost').innerHTML = '<em>⚠️ Error loading post.</em>';
+      });
+
+    // Load replies
+    fetch(`/api/thread/${threadId}`)
+      .then(res => res.json())
+      .then(data => {
+        repliesDiv.innerHTML = '';
+        data.reverse().forEach(r => addReply(r.from, r.message));
+      });
+
+    // Real-time WebSocket replies
+    const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+    socket.addEventListener('message', event => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'thread-reply' && data.threadId === threadId) {
+          addReply(data.from, data.message);
+        }
+      } catch (e) {
+        console.error("WebSocket error:", e);
+      }
+    });
+
+    // Submit reply
+    replyBtn.addEventListener('click', () => {
+      const message = replyInput.value.trim();
+      if (!message) return;
+
+      fetch(`/api/thread/${threadId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `message=${encodeURIComponent(message)}`
+      }).then(res => {
+        if (res.ok) replyInput.value = '';
+        else alert("Failed to grunt reply.");
+      });
+    });
+
+    function addReply(from, message) {
+      const div = document.createElement('div');
+      div.className = 'reply';
+      div.innerHTML = `<div class="from">${from}</div><div class="text">${message}</div>`;
+      repliesDiv.prepend(div); // Newest first
+    }
+  </script>
+</body>
+</html>

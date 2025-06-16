@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Settings</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+
+    .card {
+      background-color: #161b22;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px black;
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .card input {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      background: #0d1117;
+      color: white;
+    }
+
+    .btn {
+      background: #238636;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #2ea043;
+      transform: scale(1.03);
+    }
+
+    .back {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+      font-size: 0.95em;
+    }
+
+    .back a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <form method="POST" action="/change-password" class="card">
+    <h2>🛠️ Change Your Password</h2>
+    <input type="password" name="oldPassword" placeholder="Old Password" required />
+    <input type="password" name="newPassword" placeholder="New Password" required />
+    <button type="submit" class="btn">Etch New Password on Rock</button>
+
+    <div class="back">
+      <a href="/">← Back to Chat</a>
+    </div>
+  </form>
+</body>
+</html>

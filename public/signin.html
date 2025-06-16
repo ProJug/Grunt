@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Sign In</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: white;
+    }
+
+    .card {
+      background: #161b22;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px black;
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: #0d1117;
+      color: white;
+      font-size: 1em;
+    }
+
+    .btn {
+      background: #1da1f2;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #1a8cd8;
+      transform: scale(1.03);
+    }
+
+    .error {
+      background: #da3633;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+    }
+
+    .alt-action {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.95em;
+    }
+
+    .alt-action a {
+      color: #58a6ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .alt-action a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <form method="POST" action="/signin" class="card">
+    <h2>💀 Return to the Cave</h2>
+    <div class="error" id="error-box"></div>
+    <input name="username" placeholder="Username" required />
+    <input name="password" type="password" placeholder="Password" required />
+    <button type="submit" class="btn">Enter GoonLair</button>
+    <div class="alt-action">
+      No account? <a href="/signup.html">Create one</a>
+    </div>
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorBox = document.getElementById("error-box");
+
+    if (urlParams.get("error") === "notfound") {
+      errorBox.style.display = "block";
+      errorBox.textContent = "🚫 User not found. Create a new account below.";
+    } else if (urlParams.get("error") === "wrongpass") {
+      errorBox.style.display = "block";
+      errorBox.textContent = "🔐 Incorrect password, goblin.";
+    }
+  </script>
+</body>
+</html>

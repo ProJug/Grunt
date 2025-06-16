@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Admin Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+      color: gold;
+    }
+
+    section {
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #161b22;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px black;
+    }
+
+    .card h2 {
+      margin-bottom: 10px;
+      font-size: 1.3em;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 6px;
+      padding: 4px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    li:hover {
+      background-color: #1f2933;
+    }
+
+    button {
+      background: #da3633;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #e55353;
+    }
+
+    .dm-history {
+      margin-top: 10px;
+      background: #0d1117;
+      border: 1px solid #222;
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .dm-entry {
+      padding: 6px;
+      border-bottom: 1px solid #333;
+    }
+
+    .dm-entry .from {
+      color: #58a6ff;
+      font-weight: bold;
+    }
+
+    .dm-entry .msg {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Admin Dashboard</h1>
+
+  <section class="card">
+    <h2>👥 All Users</h2>
+    <ul id="userList">Loading users...</ul>
+  </section>
+
+  <section class="card">
+    <h2>📨 All DMs</h2>
+    <ul id="dmList">Loading DMs...</ul>
+    <div id="dmHistory" class="dm-history" style="display: none;"></div>
+  </section>
+
+  <section class="card">
+    <h2>🧼 Clear Public Chat</h2>
+    <form method="POST" action="/admin/clear-chat">
+      <button type="submit">Wipe the Feed</button>
+    </form>
+  </section>
+
+  <div style="margin-top:20px;">
+    <a href="/" style="color: #58a6ff;">← Back to Grunt</a>
+  </div>
+
+  <script>
+    let currentDMFile = null;
+
+    fetch('/admin/data')
+      .then(res => res.json())
+      .then(data => {
+        const userList = document.getElementById('userList');
+        const dmList = document.getElementById('dmList');
+
+        userList.innerHTML = '';
+        dmList.innerHTML = '';
+
+        data.users.forEach(u => {
+          const li = document.createElement('li');
+          li.textContent = u;
+          userList.appendChild(li);
+        });
+
+        data.dms.forEach(dm => {
+          const li = document.createElement('li');
+          li.textContent = dm.label;
+          li.dataset.file = dm.file;
+          li.addEventListener('click', () => {
+            loadDMHistory(dm.file);
+          });
+          dmList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        alert("Error loading admin data.");
+        console.error(err);
+      });
+
+    function loadDMHistory(dmFile) {
+      currentDMFile = dmFile;
+      fetch(`/admin/dm/${dmFile}`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('dmHistory');
+          container.innerHTML = '';
+          if (data.history && data.history.length > 0) {
+            data.history.forEach(entry => {
+              const div = document.createElement('div');
+              div.className = 'dm-entry';
+              div.innerHTML = `<span class="from">${entry.from}</span>: <span class="msg">${entry.message}</span>`;
+              container.appendChild(div);
+            });
+          } else {
+            container.innerHTML = '<em>No messages found.</em>';
+          }
+          container.style.display = 'block';
+        })
+        .catch(() => {
+          alert("Failed to load DM history.");
+        });
+    }
+  </script>
+</body>
+</html>

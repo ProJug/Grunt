@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grunt - Direct Message</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    .dm-container {
+      background: #161b22;
+      padding: 25px;
+      border-radius: 12px;
+      width: 500px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 12px black;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px;
+      background: #0d1117;
+      border-radius: 8px;
+      border: 1px solid #222;
+      margin-bottom: 12px;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      background: #22303c;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+    }
+
+    .message:hover {
+      background: #2a3b4c;
+    }
+
+    .from {
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 4px;
+    }
+
+    .text {
+      margin-left: 4px;
+    }
+
+    textarea {
+      resize: none;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #0d1117;
+      color: white;
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #1da1f2;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #1a8cd8;
+      transform: scale(1.03);
+    }
+
+    .back {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    .back a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="dm-container">
+    <h2 id="dm-header">DM</h2>
+
+    <div class="messages" id="dm-messages"></div>
+
+    <textarea id="dm-input" rows="3" placeholder="Grunt something private..."></textarea>
+    <button id="dm-send">Grunt a personal message</button>
+
+    <div class="back">
+      <a href="/">← Back to Chat</a>
+    </div>
+  </div>
+
+  <script>
+    const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+    const parts = window.location.pathname.split('/');
+    const target = parts[parts.length - 1];
+
+    document.getElementById('dm-header').textContent = `DM with ${target}`;
+    const messagesDiv = document.getElementById('dm-messages');
+    const input = document.getElementById('dm-input');
+    const sendBtn = document.getElementById('dm-send');
+
+    // Load chat history
+    fetch(`/api/dm/${target}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) return alert("Couldn't load messages");
+
+        data.history.forEach(msg => {
+          renderMessage(msg.from, msg.message);
+        });
+      });
+
+    // WebSocket live updates
+    socket.addEventListener('message', event => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'dm' && (data.from === target || data.to === target)) {
+          renderMessage(data.from, data.message);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const message = input.value.trim();
+      if (!message) return;
+
+      const payload = {
+        type: 'dm',
+        to: target,
+        message
+      };
+
+      socket.send(JSON.stringify(payload));
+      input.value = '';
+      input.focus();
+    });
+
+    function renderMessage(from, text) {
+      const msg = document.createElement('div');
+      msg.className = 'message';
+
+      const fromDiv = document.createElement('div');
+      fromDiv.className = 'from';
+      fromDiv.textContent = from;
+
+      const textDiv = document.createElement('div');
+      textDiv.className = 'text';
+      textDiv.textContent = text;
+
+      msg.appendChild(fromDiv);
+      msg.appendChild(textDiv);
+      messagesDiv.appendChild(msg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  </script>
+</body>
+</html>

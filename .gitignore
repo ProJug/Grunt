@@ -1,0 +1,5 @@
+# Don't upload node modules or private data
+node_modules/
+data/
+.env
+*.log
