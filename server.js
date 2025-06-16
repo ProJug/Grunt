@@ -12,12 +12,26 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const USERS_FILE = './users.json';
-const MESSAGES_FILE = './messages.json';
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+
+const USERS_FILE = `${DATA_DIR}/users.json`;
+const MESSAGES_FILE = `${DATA_DIR}/messages.json`;
+
+if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '{}');
+if (!fs.existsSync(MESSAGES_FILE)) fs.writeFileSync(MESSAGES_FILE, '[]');
+
+let users = JSON.parse(fs.readFileSync(USERS_FILE));
+let messages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
+
+for (const user in users) {
+  users[user].followers ||= [];
+  users[user].following ||= [];
+}
 
 function getDMFile(userA, userB) {
   const sorted = [userA, userB].sort();
-  return `./dm_${sorted[0]}_${sorted[1]}.json`;
+  return `${DATA_DIR}/dm_${sorted[0]}_${sorted[1]}.json`;
 }
 
 const upload = multer({ dest: path.join(__dirname, 'public/uploads/') });
@@ -26,16 +40,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Load data
-let users = fs.existsSync(USERS_FILE) ? JSON.parse(fs.readFileSync(USERS_FILE)) : {};
-let messages = fs.existsSync(MESSAGES_FILE) ? JSON.parse(fs.readFileSync(MESSAGES_FILE)) : [];
-
-for (const user in users) {
-  users[user].followers ||= [];
-  users[user].following ||= [];
-}
-
-// === ROUTES ===
+// ROUTES
 
 app.get('/', (req, res) => {
   const username = req.cookies.username;
@@ -125,14 +130,14 @@ app.post('/upload-post', upload.single('image'), (req, res) => {
   res.sendStatus(200);
 });
 
-// === Thread Routes ===
+// Thread Routes
 
 app.get('/thread/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/thread.html'));
 });
 
 app.get('/api/thread/:id', (req, res) => {
-  const file = `./thread_${req.params.id}.json`;
+  const file = `${DATA_DIR}/thread_${req.params.id}.json`;
   const replies = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
   res.json(replies);
 });
@@ -145,7 +150,7 @@ app.post('/api/thread/:id/reply', bodyParser.urlencoded({ extended: true }), (re
   if (!message) return res.status(400).send("Message required");
 
   const threadId = req.params.id;
-  const file = `./thread_${threadId}.json`;
+  const file = `${DATA_DIR}/thread_${threadId}.json`;
   const replies = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
 
   const entry = { from: username, message, timestamp: Date.now() };
@@ -163,7 +168,7 @@ app.post('/api/thread/:id/reply', bodyParser.urlencoded({ extended: true }), (re
   res.sendStatus(200);
 });
 
-// === DM & Profile ===
+// Profile & DMs
 
 app.get('/profile/:username', (req, res) => {
   const currentUser = req.cookies.username;
@@ -187,7 +192,8 @@ app.get('/messages.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/messages.html'));
 });
 
-// === API Endpoints ===
+// API Endpoints
+
 app.get('/api/post/:id', (req, res) => {
   const id = req.params.id;
   const post = messages.find(m => m.id === id);
@@ -232,12 +238,12 @@ app.get('/api/dm-recent', (req, res) => {
   const currentUser = req.cookies.username;
   if (!currentUser || !users[currentUser]) return res.status(401).json([]);
 
-  const files = fs.readdirSync('./').filter(f => f.startsWith('dm_') && f.endsWith('.json'));
+  const files = fs.readdirSync(DATA_DIR).filter(f => f.startsWith('dm_') && f.endsWith('.json'));
   const recentConversations = [];
 
   files.forEach(file => {
     if (!file.includes(currentUser)) return;
-    const history = JSON.parse(fs.readFileSync(file));
+    const history = JSON.parse(fs.readFileSync(path.join(DATA_DIR, file)));
     if (history.length === 0) return;
     const lastMsg = history[history.length - 1];
     const otherUser = lastMsg.from === currentUser ? lastMsg.to : lastMsg.from;
@@ -253,7 +259,7 @@ app.get('/api/dm-recent', (req, res) => {
   res.json(recentConversations);
 });
 
-// === Follow System ===
+// Follow System
 
 app.post('/follow/:username', (req, res) => {
   const currentUser = req.cookies.username;
@@ -290,7 +296,7 @@ app.post('/unfollow/:username', (req, res) => {
   res.redirect(`/profile/${target}`);
 });
 
-// === WebSocket ===
+// WebSocket
 
 wss.on('connection', (ws, req) => {
   const cookie = req.headers.cookie;
@@ -367,7 +373,7 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-// === Admin Panel ===
+// Admin Panel
 
 app.get('/admin', (req, res) => {
   const username = req.cookies.username;
@@ -384,7 +390,7 @@ app.get('/admin/data', (req, res) => {
   }
 
   const userList = Object.keys(users);
-  const dmFiles = fs.readdirSync('./').filter(f => f.startsWith('dm_') && f.endsWith('.json'));
+  const dmFiles = fs.readdirSync(DATA_DIR).filter(f => f.startsWith('dm_') && f.endsWith('.json'));
 
   const dms = dmFiles.map(f => ({
     file: f,
@@ -402,7 +408,7 @@ app.get('/admin/dm/:file', (req, res) => {
   }
 
   const safeFile = file.replace(/[^a-zA-Z0-9_.]/g, '');
-  const fullPath = `./${safeFile}`;
+  const fullPath = path.join(DATA_DIR, safeFile);
   if (!fs.existsSync(fullPath) || !safeFile.startsWith('dm_')) {
     return res.status(404).json({ error: 'DM file not found' });
   }
@@ -429,7 +435,7 @@ app.post('/admin/clear-chat', (req, res) => {
   res.send("Chat cleared.");
 });
 
-// === Catch-All ===
+// Error Handling
 
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public/404.html'));
@@ -439,10 +445,6 @@ app.use((err, req, res, next) => {
   console.error("🔥 Server Error:", err.stack);
   res.status(500).sendFile(path.join(__dirname, 'public/500.html'));
 });
-
-
-
-// === Start Server ===
 
 const PORT = 3000;
 server.listen(PORT, () => {
