@@ -43,28 +43,38 @@
       margin-bottom: 6px;
       padding: 4px;
       border-bottom: 1px solid #333;
-      cursor: pointer;
-      transition: background 0.2s ease;
     }
 
-    li:hover {
-      background-color: #1f2933;
+    .user-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px;
     }
 
-    button {
-      background: #da3633;
-      border: none;
-      padding: 10px 16px;
+    .user-header {
+      font-weight: bold;
+    }
+
+    .user-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .user-actions button {
+      padding: 5px 10px;
       border-radius: 6px;
-      color: white;
+      border: none;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 10px;
     }
 
-    button:hover {
-      background: #e55353;
-    }
+    .ban-btn { background: #da3633; color: white; }
+    .unban-btn { background: #238636; color: white; }
+    .delete-btn { background: #555; color: white; }
+    .ip-ban-btn { background: #da3633; color: white; }
 
     .dm-history {
       margin-top: 10px;
@@ -89,6 +99,34 @@
     .dm-entry .msg {
       margin-left: 5px;
     }
+
+    button[type="submit"] {
+      background: #da3633;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button[type="submit"]:hover {
+      background: #e55353;
+    }
+
+    .back {
+      margin-top: 20px;
+    }
+
+    .back a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    .back a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -112,42 +150,94 @@
     </form>
   </section>
 
-  <div style="margin-top:20px;">
-    <a href="/" style="color: #58a6ff;">← Back to Grunt</a>
+  <div class="back">
+    <a href="/">← Back to Grunt</a>
   </div>
 
   <script>
     let currentDMFile = null;
 
-    fetch('/admin/data')
-      .then(res => res.json())
-      .then(data => {
-        const userList = document.getElementById('userList');
-        const dmList = document.getElementById('dmList');
+    function loadAdminData() {
+      fetch('/admin/data')
+        .then(res => res.json())
+        .then(data => {
+          const userList = document.getElementById('userList');
+          const dmList = document.getElementById('dmList');
+          userList.innerHTML = '';
+          dmList.innerHTML = '';
 
-        userList.innerHTML = '';
-        dmList.innerHTML = '';
+          data.users.forEach(u => {
+            const li = document.createElement('li');
+            li.className = 'user-item';
 
-        data.users.forEach(u => {
-          const li = document.createElement('li');
-          li.textContent = u;
-          userList.appendChild(li);
-        });
+            const header = document.createElement('div');
+            header.className = 'user-header';
+            header.textContent = `${u.username}${u.isAdmin ? ' 🛡️' : ''} [IP: ${u.ip || 'unknown'}]`;
+            li.appendChild(header);
 
-        data.dms.forEach(dm => {
-          const li = document.createElement('li');
-          li.textContent = dm.label;
-          li.dataset.file = dm.file;
-          li.addEventListener('click', () => {
-            loadDMHistory(dm.file);
+            const actions = document.createElement('div');
+            actions.className = 'user-actions';
+
+            const banBtn = document.createElement('button');
+            banBtn.textContent = u.banned ? 'Unban' : 'Ban';
+            banBtn.className = u.banned ? 'unban-btn' : 'ban-btn';
+            banBtn.onclick = () => adminAction(u.banned ? 'unban' : 'ban', u.username);
+            actions.appendChild(banBtn);
+
+            const ipBanBtn = document.createElement('button');
+            ipBanBtn.textContent = 'IP Ban';
+            ipBanBtn.className = 'ip-ban-btn';
+            ipBanBtn.onclick = () => {
+              if (confirm(`Ban IP ${u.ip}?`)) {
+                fetch(`/admin/ipban/${u.ip}`, { method: 'POST' })
+                  .then(res => res.json())
+                  .then(() => loadAdminData());
+              }
+            };
+            actions.appendChild(ipBanBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.onclick = () => {
+              if (confirm(`Delete user ${u.username}? This is irreversible.`)) {
+                adminAction('delete-user', u.username);
+              }
+            };
+            actions.appendChild(deleteBtn);
+
+            li.appendChild(actions);
+            userList.appendChild(li);
           });
-          dmList.appendChild(li);
+
+          data.dms.forEach(dm => {
+            const li = document.createElement('li');
+            li.textContent = dm.label;
+            li.dataset.file = dm.file;
+            li.addEventListener('click', () => {
+              loadDMHistory(dm.file);
+            });
+            dmList.appendChild(li);
+          });
+        })
+        .catch(err => {
+          alert("Error loading admin data.");
+          console.error(err);
         });
-      })
-      .catch(err => {
-        alert("Error loading admin data.");
-        console.error(err);
-      });
+    }
+
+    function adminAction(action, username) {
+      fetch(`/admin/${action}/${username}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) loadAdminData();
+          else alert(data.error || 'Action failed.');
+        })
+        .catch(err => {
+          alert("Action error.");
+          console.error(err);
+        });
+    }
 
     function loadDMHistory(dmFile) {
       currentDMFile = dmFile;
@@ -172,6 +262,8 @@
           alert("Failed to load DM history.");
         });
     }
+
+    loadAdminData();
   </script>
 </body>
 </html>

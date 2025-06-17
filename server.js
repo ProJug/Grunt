@@ -17,16 +17,20 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
 const USERS_FILE = `${DATA_DIR}/users.json`;
 const MESSAGES_FILE = `${DATA_DIR}/messages.json`;
+const IP_BAN_FILE = `${DATA_DIR}/banned_ips.json`;
 
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '{}');
 if (!fs.existsSync(MESSAGES_FILE)) fs.writeFileSync(MESSAGES_FILE, '[]');
+if (!fs.existsSync(IP_BAN_FILE)) fs.writeFileSync(IP_BAN_FILE, '[]');
 
 let users = JSON.parse(fs.readFileSync(USERS_FILE));
 let messages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
+let bannedIPs = new Set(JSON.parse(fs.readFileSync(IP_BAN_FILE)));
 
 for (const user in users) {
   users[user].followers ||= [];
   users[user].following ||= [];
+  users[user].banned ||= false;
 }
 
 function getDMFile(userA, userB) {
@@ -40,14 +44,26 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ROUTES
+// 🔒 Block banned IPs & accounts
+app.use((req, res, next) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  if (bannedIPs.has(ip)) return res.status(403).sendFile(path.join(__dirname, 'public/banned.html'));
 
+  const username = req.cookies.username;
+  if (username && users[username]?.banned && !req.path.startsWith('/admin') && req.path !== '/banned.html') {
+    return res.redirect('/banned.html');
+  }
+  next();
+});
+
+// Home
 app.get('/', (req, res) => {
   const username = req.cookies.username;
   if (!username || !users[username]) return res.redirect('/signin.html');
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+// User Data API
 app.get('/userdata', (req, res) => {
   const username = req.cookies.username;
   if (!username || !users[username]) return res.status(401).json({ error: "Not authenticated" });
@@ -65,6 +81,7 @@ app.get('/userdata', (req, res) => {
   });
 });
 
+// Signup
 app.post('/signup', async (req, res) => {
   const { username, password } = req.body;
   if (users[username]) return res.send('Username already taken.');
@@ -75,27 +92,37 @@ app.post('/signup', async (req, res) => {
     posts: 0,
     followers: [],
     following: [],
-    isAdmin: username.toLowerCase() === 'admin'
+    isAdmin: username.toLowerCase() === 'admin',
+    banned: false,
+    ip: ''
   };
 
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
   res.cookie('username', username, { sameSite: 'Lax' }).redirect('/');
 });
 
+// Signin with IP logging
 app.post('/signin', async (req, res) => {
   const { username, password } = req.body;
   const user = users[username];
   if (!user) return res.redirect('/signin.html?error=notfound');
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.redirect('/signin.html?error=wrongpass');
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  users[username].ip = ip;
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+
   res.cookie('username', username, { sameSite: 'Lax' }).redirect('/');
 });
 
+// Logout
 app.get('/logout', (req, res) => {
   res.clearCookie('username');
   res.redirect('/signin.html');
 });
 
+// Post Upload
 app.post('/upload-post', upload.single('image'), (req, res) => {
   const username = req.cookies.username;
   if (!username || !users[username]) return res.status(401).send("Not authorized");
@@ -129,9 +156,7 @@ app.post('/upload-post', upload.single('image'), (req, res) => {
 
   res.sendStatus(200);
 });
-
-// Thread Routes
-
+// Threads
 app.get('/thread/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/thread.html'));
 });
@@ -169,7 +194,6 @@ app.post('/api/thread/:id/reply', bodyParser.urlencoded({ extended: true }), (re
 });
 
 // Profile & DMs
-
 app.get('/profile/:username', (req, res) => {
   const currentUser = req.cookies.username;
   const targetUser = req.params.username;
@@ -192,11 +216,9 @@ app.get('/messages.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/messages.html'));
 });
 
-// API Endpoints
-
+// APIs
 app.get('/api/post/:id', (req, res) => {
-  const id = req.params.id;
-  const post = messages.find(m => m.id === id);
+  const post = messages.find(m => m.id === req.params.id);
   if (!post) return res.status(404).json({ error: "Not found" });
   res.json(post);
 });
@@ -259,8 +281,7 @@ app.get('/api/dm-recent', (req, res) => {
   res.json(recentConversations);
 });
 
-// Follow System
-
+// Follow system
 app.post('/follow/:username', (req, res) => {
   const currentUser = req.cookies.username;
   const target = req.params.username;
@@ -296,8 +317,7 @@ app.post('/unfollow/:username', (req, res) => {
   res.redirect(`/profile/${target}`);
 });
 
-// WebSocket
-
+// WebSocket for public chat and DMs
 wss.on('connection', (ws, req) => {
   const cookie = req.headers.cookie;
   const username = cookie?.split('; ').find(c => c.startsWith('username='))?.split('=')[1];
@@ -374,7 +394,6 @@ wss.on('connection', (ws, req) => {
 });
 
 // Admin Panel
-
 app.get('/admin', (req, res) => {
   const username = req.cookies.username;
   if (!username || !users[username] || !users[username].isAdmin) {
@@ -389,9 +408,14 @@ app.get('/admin/data', (req, res) => {
     return res.status(403).sendFile(path.join(__dirname, 'public/403.html'));
   }
 
-  const userList = Object.keys(users);
-  const dmFiles = fs.readdirSync(DATA_DIR).filter(f => f.startsWith('dm_') && f.endsWith('.json'));
+  const userList = Object.keys(users).map(u => ({
+    username: u,
+    isAdmin: users[u].isAdmin,
+    banned: users[u].banned || false,
+    ip: users[u].ip || 'unknown'
+  }));
 
+  const dmFiles = fs.readdirSync(DATA_DIR).filter(f => f.startsWith('dm_') && f.endsWith('.json'));
   const dms = dmFiles.map(f => ({
     file: f,
     label: f.replace('dm_', '').replace('.json', '').replace('_', ' ⇄ ')
@@ -417,26 +441,87 @@ app.get('/admin/dm/:file', (req, res) => {
   res.json({ history });
 });
 
+// Admin Actions
 app.post('/admin/clear-chat', (req, res) => {
   const username = req.cookies.username;
-  if (!username || !users[username] || !users[username].isAdmin) {
-    return res.status(403).sendFile(path.join(__dirname, 'public/403.html'));
-  }
+  if (!username || !users[username]?.isAdmin) return res.status(403).send("Nope");
 
   messages = [];
   fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2));
+  wss.clients.forEach(c => c.send(JSON.stringify({ type: 'clear-chat' })));
+  res.send("Cleared");
+});
 
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'clear-chat' }));
+app.post('/admin/ban/:target', (req, res) => {
+  const admin = req.cookies.username;
+  const tgt = req.params.target;
+  if (!admin || !users[admin]?.isAdmin || !users[tgt] || tgt === admin) {
+    return res.status(400).json({ error: 'Invalid ban' });
+  }
+  users[tgt].banned = true;
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  wss.clients.forEach(c => { if (c.user === tgt) c.close(); });
+  res.json({ success: true });
+});
+
+app.post('/admin/unban/:target', (req, res) => {
+  const admin = req.cookies.username;
+  const tgt = req.params.target;
+  if (!admin || !users[admin]?.isAdmin || !users[tgt]) {
+    return res.status(400).json({ error: 'Invalid unban' });
+  }
+  users[tgt].banned = false;
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  res.json({ success: true });
+});
+
+app.post('/admin/delete-user/:target', (req, res) => {
+  const admin = req.cookies.username;
+  const tgt = req.params.target;
+  if (!admin || !users[admin]?.isAdmin || !users[tgt] || tgt === admin) {
+    return res.status(400).json({ error: 'Invalid delete' });
+  }
+
+  delete users[tgt];
+  messages = messages.filter(m => m.username !== tgt);
+  fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2));
+
+  fs.readdirSync(DATA_DIR).forEach(f => {
+    if (f.startsWith(`dm_${tgt}_`) || f.endsWith(`_${tgt}.json`)) {
+      fs.unlinkSync(path.join(DATA_DIR, f));
     }
   });
 
-  res.send("Chat cleared.");
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  wss.clients.forEach(c => { if (c.user === tgt) c.close(); });
+
+  res.json({ success: true });
 });
 
-// Error Handling
+app.post('/admin/ipban/:ip', (req, res) => {
+  const admin = req.cookies.username;
+  const ip = req.params.ip;
+  if (!users[admin]?.isAdmin) return res.status(403).send('Not authorized');
 
+  bannedIPs.add(ip);
+  fs.writeFileSync(IP_BAN_FILE, JSON.stringify([...bannedIPs], null, 2));
+  wss.clients.forEach(c => {
+    if (c._socket.remoteAddress === ip) c.close();
+  });
+  res.json({ success: true });
+});
+
+app.post('/admin/unipban/:ip', (req, res) => {
+  const admin = req.cookies.username;
+  const ip = req.params.ip;
+  if (!users[admin]?.isAdmin) return res.status(403).send('Not authorized');
+
+  bannedIPs.delete(ip);
+  fs.writeFileSync(IP_BAN_FILE, JSON.stringify([...bannedIPs], null, 2));
+  res.json({ success: true });
+});
+
+// Errors
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public/404.html'));
 });
@@ -446,7 +531,8 @@ app.use((err, req, res, next) => {
   res.status(500).sendFile(path.join(__dirname, 'public/500.html'));
 });
 
+// Start Server
 const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Grunt online at http://localhost:${PORT}`);
+  console.log(`🚀 Grunt is live at http://localhost:${PORT}`);
 });
