@@ -13,6 +13,7 @@
       align-items: center;
       height: 100vh;
       color: white;
+      flex-direction: column;
     }
 
     .card {
@@ -94,9 +95,25 @@
     .back a:hover {
       text-decoration: underline;
     }
+
+    #savedBox {
+      display: none;
+      margin-bottom: 12px;
+      background: #238636;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      width: 420px;
+      box-shadow: 0 0 10px #000;
+    }
   </style>
 </head>
 <body>
+
+  <div id="savedBox">✅ Profile changes saved!</div>
+
   <form class="card" id="profileForm" method="POST" action="/save-profile">
     <h2>📝 Update Your Profile</h2>
     <input type="text" name="displayName" id="displayName" placeholder="Display Name" />
@@ -126,6 +143,21 @@
   </form>
 
   <script>
+    // Show saved message if redirected with ?saved=1
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("saved") === "1") {
+      const savedBox = document.getElementById("savedBox");
+      if (savedBox) {
+        savedBox.style.display = "block";
+        setTimeout(() => savedBox.style.display = "none", 4000);
+      }
+      // Clean URL after delay
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, "/profile.html");
+      }, 4500);
+    }
+
+    // Load user data
     fetch('/userdata')
       .then(res => res.json())
       .then(data => {

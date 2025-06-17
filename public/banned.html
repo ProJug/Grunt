@@ -1,2 +1,57 @@
-<h1>You have been banned.</h1>
-<p>You violated Grunt law. Begone, cave freak.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>You Are Banned | Grunt</title>
+  <style>
+    body {
+      background: #0d1117;
+      color: #f85149;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 0.5em;
+      color: #f85149;
+      text-shadow: 0 0 10px #8b0000;
+    }
+
+    p {
+      font-size: 1.3em;
+      max-width: 600px;
+      color: #cccccc;
+    }
+
+    .skull {
+      font-size: 5em;
+      margin-bottom: 0.3em;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); opacity: 0.8; }
+      to { transform: scale(1.05); opacity: 1; }
+    }
+
+    .info {
+      margin-top: 2em;
+      font-size: 0.9em;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="skull">💀</div>
+  <h1>YOU HAVE BEEN BANNED</h1>
+  <p>You violated the sacred code of Grunt. Whether by trollery, spam-foolery, or being annoying... you're out.</p>
+  <div class="info">If you believe this is a mistake, touch grass and try again later. Or contact an admin.</div>
+</body>
+</html>

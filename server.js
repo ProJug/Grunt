@@ -156,6 +156,21 @@ app.post('/upload-post', upload.single('image'), (req, res) => {
 
   res.sendStatus(200);
 });
+
+// Save Profile
+app.post('/save-profile', (req, res) => {
+  const username = req.cookies.username;
+  if (!username || !users[username]) return res.status(401).send("Not authorized");
+
+  const { displayName, handle, bio } = req.body;
+  users[username].displayName = displayName?.trim() || username;
+  users[username].handle = handle?.trim() || `@${username}`;
+  users[username].bio = bio?.trim() || "";
+
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  res.redirect('/profile.html?saved=1');
+});
+
 // Threads
 app.get('/thread/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/thread.html'));
