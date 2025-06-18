@@ -1,54 +1,38 @@
 // server.js
 
-const express       = require('express');
-const http          = require('http');
-const WebSocket     = require('ws');
-const path          = require('path');
-const fs            = require('fs');
-const cookieParser  = require('cookie-parser');
-const bodyParser    = require('body-parser');
-const multer        = require('multer');
+const express      = require('express');
+const http         = require('http');
+const WebSocket    = require('ws');
+const path         = require('path');
+const multer       = require('multer');
+const cookieParser = require('cookie-parser');
+const bodyParser   = require('body-parser');
+
+const {
+  ensureDir,
+  ensureFile,
+  loadJSON,
+  saveJSON,
+  broadcast
+} = require('./utils/lib');
 
 const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocket.Server({ server });
 
-// ─── Helpers for JSON files ────────────────────────────────────────────────────
-function ensureFile(filePath, defaultValue) {
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), 'utf-8');
-  }
-}
-
-function loadJSON(filePath, defaultValue) {
-  try {
-    let content = fs.readFileSync(filePath, 'utf-8').trim();
-    if (!content) {
-      fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), 'utf-8');
-      return defaultValue;
-    }
-    return JSON.parse(content);
-  } catch (err) {
-    fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), 'utf-8');
-    return defaultValue;
-  }
-}
-
-// ─── Ensure necessary directories ──────────────────────────────────────────────
+// ─── Setup directories ─────────────────────────────────────────────────────────
 const DATA_DIR               = path.join(__dirname, 'data');
 const UPLOAD_DIR             = path.join(__dirname, 'public/uploads');
 const PRIVATE_GROUP_MSGS_DIR = path.join(DATA_DIR, 'privateGroupMessages');
 
-for (const dir of [DATA_DIR, UPLOAD_DIR, PRIVATE_GROUP_MSGS_DIR]) {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
+[DATA_DIR, UPLOAD_DIR, PRIVATE_GROUP_MSGS_DIR].forEach(ensureDir);
 
-// ─── Data files ────────────────────────────────────────────────────────────────
-const USERS_FILE           = path.join(DATA_DIR, 'users.json');
-const MESSAGES_FILE        = path.join(DATA_DIR, 'messages.json');
-const IP_BAN_FILE          = path.join(DATA_DIR, 'banned_ips.json');
-const GROUP_CHATS_FILE     = path.join(DATA_DIR, 'groupChats.json');
-const PRIVATE_GROUPS_FILE  = path.join(DATA_DIR, 'privateGroups.json');
+// ─── Setup JSON data files ─────────────────────────────────────────────────────
+const USERS_FILE          = path.join(DATA_DIR, 'users.json');
+const MESSAGES_FILE       = path.join(DATA_DIR, 'messages.json');
+const IP_BAN_FILE         = path.join(DATA_DIR, 'banned_ips.json');
+const GROUP_CHATS_FILE    = path.join(DATA_DIR, 'groupChats.json');
+const PRIVATE_GROUPS_FILE = path.join(DATA_DIR, 'privateGroups.json');
 
 ensureFile(USERS_FILE,         {});
 ensureFile(MESSAGES_FILE,      []);
@@ -56,14 +40,14 @@ ensureFile(IP_BAN_FILE,        []);
 ensureFile(GROUP_CHATS_FILE,   []);
 ensureFile(PRIVATE_GROUPS_FILE, []);
 
-// ─── In-memory state ───────────────────────────────────────────────────────────
+// ─── Load in-memory state ───────────────────────────────────────────────────────
 let users      = loadJSON(USERS_FILE,       {});
 let messages   = loadJSON(MESSAGES_FILE,    []);
 let bannedArr  = loadJSON(IP_BAN_FILE,      []);
 let groupChats = loadJSON(GROUP_CHATS_FILE, []);
 const bannedIPs = new Set(bannedArr);
 
-// normalize user objects
+// normalize any missing user fields
 for (const username in users) {
   users[username].followers = users[username].followers || [];
   users[username].following = users[username].following || [];
@@ -80,7 +64,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(require('./middleware/auth')(users, bannedIPs));
 
-// ─── Auth & API Routes ─────────────────────────────────────────────────────────
+// ─── Auth & Core API Routes ────────────────────────────────────────────────────
 app.use('/', require('./routes/auth')(users, USERS_FILE));
 app.use(
   '/',
@@ -95,7 +79,7 @@ app.use(
   )
 );
 
-// ─── Public Group Chats REST API ───────────────────────────────────────────────
+// ─── Public Group Chats Endpoints ──────────────────────────────────────────────
 app.get('/api/group-chats/messages', (req, res) => {
   res.json(groupChats);
 });
@@ -103,16 +87,13 @@ app.get('/api/group-chats/messages', (req, res) => {
 app.post('/api/group-chats/messages', (req, res) => {
   const username = req.cookies.username;
   if (!username) return res.status(401).json({ error: 'unauthenticated' });
+
   const { message } = req.body;
   const newMsg = { username, message, timestamp: Date.now() };
-  groupChats.push(newMsg);
-  fs.writeFileSync(GROUP_CHATS_FILE, JSON.stringify(groupChats, null, 2), 'utf-8');
 
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ channel: 'group', payload: newMsg }));
-    }
-  });
+  groupChats.push(newMsg);
+  saveJSON(GROUP_CHATS_FILE, groupChats);
+  broadcast(wss, 'group', newMsg);
 
   res.json(newMsg);
 });
@@ -123,7 +104,7 @@ app.use(
   require('./routes/privateGroupChats')(DATA_DIR, users, wss)
 );
 
-// ─── Admin routes ──────────────────────────────────────────────────────────────
+// ─── Admin Routes ──────────────────────────────────────────────────────────────
 app.use(
   '/admin',
   require('./routes/admin')(

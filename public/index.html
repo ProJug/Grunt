@@ -83,17 +83,16 @@
       color: #e1e8ed;
       font-size: 1.2em;
     }
-    .chat-list {
+    .group-list .chat-list {
       list-style: none;
-      padding: 0;
-      margin-top: 8px;
-      flex: 1;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      overflow-y: auto;
+      margin-top: 8px;
+      padding: 0;
     }
-    .chat-item {
+    .group-list .chat-item {
       padding: 8px 12px;
       background-color: #22303c;
       border-radius: 8px;
@@ -102,11 +101,14 @@
       transition: background-color 0.2s ease;
       font-size: 0.95em;
     }
-    .chat-item:hover {
+    .group-list .chat-item:hover {
       background-color: #2a3b4c;
     }
-    .chat-item.private {
+    .group-list .chat-item.private {
       font-weight: bold;
+    }
+    .group-list .chat-item.public {
+      opacity: 0.85;
     }
 
     /* === Create Group Button === */
@@ -160,8 +162,13 @@
     <aside class="group-list desktop-only">
       <button id="createGroupBtn">+ Create Private Group</button>
       <h3>Other Group Chats</h3>
-      <ul id="otherChatList" class="chat-list">
-        <!-- groups will be injected here by JS -->
+      <ul class="chat-list">
+        <!-- Private chats first -->
+        <li class="chat-item private">Alice &amp; Bob</li>
+        <li class="chat-item private">Team Alpha</li>
+        <!-- Public chats below -->
+        <li class="chat-item public">Fun Lounge</li>
+        <li class="chat-item public">Game Night</li>
       </ul>
     </aside>
   </div>
