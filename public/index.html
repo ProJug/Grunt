@@ -3,58 +3,175 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Grunt</title>
+  <title>Grunt – Group Chats</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* === Group Chat Overrides === */
+    .group-chat {
+      display: flex;
+      flex-direction: column;
+      background-color: #192734;
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      max-height: calc(100vh - 60px);
+      box-sizing: border-box;
+    }
+    .group-chat h2 {
+      margin-bottom: 15px;
+      font-size: 1.4em;
+      color: #e1e8ed;
+    }
+    .group-chat .messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding-right: 5px;
+    }
+    .group-chat .message {
+      background-color: #22303c;
+      border-radius: 8px;
+      padding: 10px;
+      color: #e1e8ed;
+      word-wrap: break-word;
+      max-width: 70%;
+    }
+    .group-chat .post-box {
+      display: flex;
+      gap: 10px;
+    }
+    .group-chat .post-box input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #22303c;
+      color: #e1e8ed;
+      font-size: 1em;
+    }
+    .group-chat .post-box button {
+      padding: 10px 20px;
+      background-color: #1da1f2;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .group-chat .post-box button:hover {
+      transform: scale(1.05);
+    }
+
+    /* === Other Group Chats List === */
+    .group-list {
+      width: 200px;
+      background-color: #192734;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 60px);
+      box-sizing: border-box;
+      gap: 10px;
+    }
+    .group-list h3 {
+      margin: 0;
+      color: #e1e8ed;
+      font-size: 1.2em;
+    }
+    .chat-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 8px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chat-item {
+      padding: 8px 12px;
+      background-color: #22303c;
+      border-radius: 8px;
+      color: #e1e8ed;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      font-size: 0.95em;
+    }
+    .chat-item:hover {
+      background-color: #2a3b4c;
+    }
+    .chat-item.private {
+      font-weight: bold;
+    }
+
+    /* === Create Group Button === */
+    #createGroupBtn {
+      padding: 8px;
+      background-color: #17bf63;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    #createGroupBtn:hover {
+      background-color: #14a754;
+      transform: scale(1.05);
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-
-    <!-- Top Sidebar (turns into mobile nav) -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="logo desktop-only">💬 Grunt</div>
       <nav class="nav-links">
-        <a href="/" class="nav-item">🏠 Home</a>
-        <a href="/messages.html" class="nav-item">📨 Messages</a>
+        <a href="/messages.html" class="nav-item">📩 Private Messages</a>
+        <a href="/index.html" class="nav-item">👥 Group Chats</a>
+        <a href="/threadscreen.html" class="nav-item">🧵 Threads</a>
         <a href="/profile.html" class="nav-item">👤 Profile</a>
-        <a href="/settings.html" class="nav-item">🔐 Settings</a>
-        <a href="/logout" class="nav-item" style="color: #da3633;">🚪 Logout</a>
+        <a href="/settings.html" class="nav-item">⚙️ Settings</a>
+        <a href="/logout" class="nav-item" style="color: #da3633;">🚪 Sign Out</a>
       </nav>
-
-      <!-- Admin Panel Link (desktop only for now) -->
-      <div id="adminPanelLink" class="desktop-only" style="margin-top: 10px; display: none;">
-        <a href="/admin" style="display: block; background:#da3633; color:white; padding:10px; width:100%; border-radius:8px; text-align:center; text-decoration:none; font-weight:bold;">
+      <div id="adminPanelLink" class="desktop-only" style="margin-top:10px;display:none;">
+        <a href="/admin" style="display:block;text-align:center;text-decoration:none;font-weight:bold;">
           🛡️ Open Admin Panel
         </a>
       </div>
     </aside>
 
-    <!-- Main Feed -->
-    <main class="feed">
-      <form class="post-box" id="postForm" enctype="multipart/form-data">
-        <textarea name="message" placeholder="what are you shitposting next?" rows="3" required></textarea>
-        <input type="file" name="image" accept="image/*" />
-        <button type="submit">Post</button>
-      </form>
+    <!-- Main Group Chat -->
+    <main class="feed group-chat">
+      <h2>Main Group Chat</h2>
       <div class="messages"></div>
+      <form id="groupChatForm" class="post-box">
+        <input type="text" name="message" placeholder="Type your message..." required />
+        <button type="submit">Send</button>
+      </form>
     </main>
 
-    <!-- Right Profile Card -->
-    <aside class="profile">
-      <div class="card">
-        <div class="profile-pic" id="profile-letter">?</div>
-        <div class="info">
-          <div class="name" id="profile-name">Loading...</div>
-          <div class="handle" id="profile-handle">@...</div>
-        </div>
-        <div class="stats">
-          <div><strong id="stat-posts">0</strong><span>Grunts</span></div>
-          <div><strong id="stat-following">0</strong><span>Hunted</span></div>
-          <div><strong id="stat-followers">0</strong><span>Minions</span></div>
-        </div>
-      </div>
+    <!-- Other Group Chats List & Create Button -->
+    <aside class="group-list desktop-only">
+      <button id="createGroupBtn">+ Create Private Group</button>
+      <h3>Other Group Chats</h3>
+      <ul id="otherChatList" class="chat-list">
+        <!-- groups will be injected here by JS -->
+      </ul>
     </aside>
-
   </div>
-  <script src="script.js"></script>
+
+  <script src="groupChats.js"></script>
+  <script>
+    // Redirect to the private-groups page where you can name & create
+    document.getElementById('createGroupBtn').addEventListener('click', () => {
+      window.location.href = '/privateGroups.html';
+    });
+  </script>
 </body>
 </html>

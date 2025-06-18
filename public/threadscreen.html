@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grunt – Feed</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo desktop-only">💬 Grunt</div>
+      <nav class="nav-links">
+        <a href="/messages.html" class="nav-item">📩 Private Messages</a>
+        <a href="/index.html" class="nav-item">👥 Group Chats</a>
+        <a href="/threadscreen.html" class="nav-item">🧵 Threads</a>
+        <a href="/profile.html" class="nav-item">👤 Profile</a>
+        <a href="/settings.html" class="nav-item">⚙️ Settings</a>
+        <a href="/logout" class="nav-item" style="color: #da3633;">🚪 Sign Out</a>
+      </nav>
+      <div id="adminPanelLink" class="desktop-only" style="margin-top:10px;display:none;">
+        <a href="/admin" style="display:block;text-align:center;text-decoration:none;font-weight:bold;">
+          🛡️ Open Admin Panel
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="feed">
+      <form class="post-box" id="postForm" enctype="multipart/form-data">
+        <textarea name="message" placeholder="what are you shitposting next?" rows="3" required></textarea>
+        <input type="file" name="image" accept="image/*" />
+        <button type="submit">Post</button>
+      </form>
+      <div class="messages"></div>
+    </main>
+
+    <!-- Profile Panel -->
+    <aside class="profile-panel desktop-only">
+      <div class="profile-header">
+        <div class="avatar" id="profile-letter">?</div>
+        <div class="name" id="profile-name">Loading...</div>
+        <div class="handle" id="profile-handle">@...</div>
+      </div>
+      <div class="stats">
+        <div><strong id="stat-posts">0</strong><span>Grunts</span></div>
+        <div><strong id="stat-following">0</strong><span>Hunted</span></div>
+        <div><strong id="stat-followers">0</strong><span>Minions</span></div>
+      </div>
+    </aside>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

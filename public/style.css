@@ -1,3 +1,4 @@
+/* === Reset & Base === */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -12,15 +13,17 @@ body {
   touch-action: manipulation;
 }
 
+/* === Layout Container === */
 .container {
   display: flex;
+  align-items: flex-start;       /* Prevent children from stretching vertically */
   max-width: 1200px;
-  margin: auto;
+  margin: 0 auto;
   padding: 20px;
   gap: 20px;
-  flex-wrap: wrap;
 }
 
+/* === Sidebar === */
 .sidebar {
   width: 200px;
   display: flex;
@@ -31,6 +34,11 @@ body {
   font-size: 1.5em;
   font-weight: bold;
   margin-bottom: 20px;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
 }
 
 .nav-item {
@@ -48,12 +56,13 @@ body {
   transform: translateX(2px);
 }
 
+/* === Main Feed === */
 .feed {
   flex: 1;
   background-color: #192734;
   border-radius: 12px;
   padding: 20px;
-  min-width: 280px;
+  min-width: 300px;
 }
 
 .post-box {
@@ -72,7 +81,6 @@ body {
   color: white;
   margin-bottom: 10px;
   font-size: 1em;
-  box-shadow: none;
 }
 
 .post-box textarea::placeholder {
@@ -122,6 +130,7 @@ body {
   background-color: #1a8cd8;
   transform: scale(1.05);
 }
+
 .messages {
   display: flex;
   flex-direction: column;
@@ -153,6 +162,11 @@ body {
   color: white;
 }
 
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
 .content .user {
   font-weight: bold;
 }
@@ -161,233 +175,64 @@ body {
   color: #ccc;
 }
 
-.profile {
+/* === Profile Panel === */
+.profile-panel {
   width: 240px;
+  display: flex;
+  flex-direction: column;
+  background-color: #192734;    /* Box background */
+  border-radius: 12px;          /* Rounded corners */
+  padding: 20px;                /* Inner spacing */
+  align-self: flex-start;       /* Ensure it sizes to its own content */
 }
 
-.card {
-  background-color: #192734;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px #000;
+.profile-panel .profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
-.profile-pic {
+#profile-letter {
+  background-color: #1da1f2;
   width: 60px;
   height: 60px;
-  background-color: #1da1f2;
   border-radius: 50%;
   display: grid;
   place-items: center;
   font-size: 1.5em;
   color: white;
-  margin-bottom: 10px;
-  transition: box-shadow 0.3s ease;
+  font-weight: bold;
 }
 
-.profile-pic:hover {
-  box-shadow: 0 0 10px #1da1f2;
-}
-
-.info .name {
+.profile-panel .name {
   font-weight: bold;
   font-size: 1.2em;
 }
 
-.info .handle {
+.profile-panel .handle {
   color: #8899a6;
-  margin-bottom: 10px;
 }
 
-.stats {
+.profile-panel .stats {
   display: flex;
   justify-content: space-between;
+  margin-top: 10px;
 }
 
-.stats div {
+.profile-panel .stats div {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.stats span {
+.profile-panel .stats span {
   color: #8899a6;
   font-size: 0.85em;
 }
 
-.nav-item.badge::after {
-  content: '•';
-  color: red;
-  margin-left: 6px;
-  font-size: 1.5em;
-  vertical-align: middle;
-}
-
-.connection-status {
-  color: #ccc;
-  font-size: 0.9em;
-  margin-top: 10px;
-  text-align: center;
-}
-
+/* === Utility === */
 .desktop-only {
   display: block;
-}
-
-/* === Threaded Comments === */
-.comments {
-  font-size: 14px;
-  color: #ccc;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-left: 10px;
-}
-
-.comment-box {
-  padding: 4px 8px;
-  border-left: 2px solid #333;
-  background-color: #141414;
-  border-radius: 4px;
-}
-
-.comment-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.comment-header strong {
-  color: #1da1f2;
-  font-size: 14px;
-}
-
-.comment-header span {
-  font-size: 14px;
-  color: #ccc;
-}
-
-.comment-replies {
-  margin-left: 16px;
-  padding-left: 10px;
-  border-left: 1px dashed #444;
-}
-
-.reply-button, .collapse-button {
-  background: transparent;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  font-size: 12px;
-  padding: 0 4px;
-}
-
-.reply-button:hover, .collapse-button:hover {
-  color: #fff;
-}
-
-/* === MOBILE NAV + RESPONSIVE LAYOUT === */
-@media (max-width: 768px) {
-  body {
-    padding-bottom: 40px;
-  }
-
-  .container {
-    flex-direction: column;
-    padding: 10px;
-  }
-
-  .sidebar {
-    width: 100%;
-    padding: 10px 0;
-    background: #192734;
-    border-bottom: 1px solid #222;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-
-  .nav-links {
-    display: flex;
-    justify-content: space-evenly; /* was space-around */
-    padding: 0 6px;
-  }
-
-
-  .nav-item {
-    flex: 1;
-    padding: 12px 6px;
-    font-size: 1em;
-  }
-
-  .logo,
-  .desktop-only {
-    display: none !important;
-  }
-
-  .feed,
-  .profile {
-    width: 100%;
-  }
-
-  .post-box textarea,
-  .post-box input[type="file"],
-  .post-box button {
-    width: 100%;
-    font-size: 1em;
-    padding: 12px;
-  }
-
-  .post-box input[type="file"] {
-    background: #1a1a1a;
-    color: #ccc;
-    border: 1px solid #333;
-    border-radius: 8px;
-  }
-
-  .post-box input[type="file"]::file-selector-button {
-    background-color: #1da1f2;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    font-size: 0.9em;
-    font-weight: bold;
-    border-radius: 8px;
-    margin-right: 10px;
-  }
-
-  .messages {
-    gap: 10px;
-  }
-
-  .message {
-    flex-direction: column;
-    padding: 8px;
-  }
-
-  .avatar {
-    margin-bottom: 5px;
-  }
-
-  .card {
-    width: 100% !important;
-    margin-bottom: 20px;
-  }
-
-  .profile-pic {
-    width: 50px;
-    height: 50px;
-    font-size: 1.2em;
-  }
-
-  .stats {
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
-  }
-
-  #adminPanelLink {
-    display: none !important;
-  }
 }
