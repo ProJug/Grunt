@@ -34,30 +34,33 @@ function loadJSON(filePath, defaultValue) {
   }
 }
 
-// ─── Data directory & files ───────────────────────────────────────────────────
-const DATA_DIR                = path.join(__dirname, 'data');
-const USERS_FILE              = path.join(DATA_DIR, 'users.json');
-const MESSAGES_FILE           = path.join(DATA_DIR, 'messages.json');
-const IP_BAN_FILE             = path.join(DATA_DIR, 'banned_ips.json');
-const GROUP_CHATS_FILE        = path.join(DATA_DIR, 'groupChats.json');
-const PRIVATE_GROUPS_FILE     = path.join(DATA_DIR, 'privateGroups.json');
-const PRIVATE_GROUP_MSGS_DIR  = path.join(DATA_DIR, 'privateGroupMessages');
+// ─── Ensure necessary directories ──────────────────────────────────────────────
+const DATA_DIR               = path.join(__dirname, 'data');
+const UPLOAD_DIR             = path.join(__dirname, 'public/uploads');
+const PRIVATE_GROUP_MSGS_DIR = path.join(DATA_DIR, 'privateGroupMessages');
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(DATA_DIR))               fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(UPLOAD_DIR))             fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+if (!fs.existsSync(PRIVATE_GROUP_MSGS_DIR)) fs.mkdirSync(PRIVATE_GROUP_MSGS_DIR, { recursive: true });
+
+// ─── Data files ────────────────────────────────────────────────────────────────
+const USERS_FILE           = path.join(DATA_DIR, 'users.json');
+const MESSAGES_FILE        = path.join(DATA_DIR, 'messages.json');
+const IP_BAN_FILE          = path.join(DATA_DIR, 'banned_ips.json');
+const GROUP_CHATS_FILE     = path.join(DATA_DIR, 'groupChats.json');
+const PRIVATE_GROUPS_FILE  = path.join(DATA_DIR, 'privateGroups.json');
+
 ensureFile(USERS_FILE,       {});
 ensureFile(MESSAGES_FILE,    []);
 ensureFile(IP_BAN_FILE,      []);
 ensureFile(GROUP_CHATS_FILE, []);
 ensureFile(PRIVATE_GROUPS_FILE, []);
-if (!fs.existsSync(PRIVATE_GROUP_MSGS_DIR)) fs.mkdirSync(PRIVATE_GROUP_MSGS_DIR);
 
 // ─── In-memory state ───────────────────────────────────────────────────────────
 let users      = loadJSON(USERS_FILE,       {});
 let messages   = loadJSON(MESSAGES_FILE,    []);
 let bannedArr  = loadJSON(IP_BAN_FILE,      []);
 let groupChats = loadJSON(GROUP_CHATS_FILE, []);
-// privateGroups are managed inside routes/privateGroupChats.js
-
 const bannedIPs = new Set(bannedArr);
 
 // normalize user objects
@@ -68,7 +71,7 @@ for (const username in users) {
 }
 
 // ─── File upload setup ─────────────────────────────────────────────────────────
-const upload = multer({ dest: path.join(__dirname, 'public/uploads/') });
+const upload = multer({ dest: UPLOAD_DIR });
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -154,6 +157,6 @@ app.use((err, req, res, next) => {
 
 // ─── Start server ───────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Grunt is live at http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Grunt is live on port ${PORT}`);
 });
