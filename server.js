@@ -39,9 +39,9 @@ const DATA_DIR               = path.join(__dirname, 'data');
 const UPLOAD_DIR             = path.join(__dirname, 'public/uploads');
 const PRIVATE_GROUP_MSGS_DIR = path.join(DATA_DIR, 'privateGroupMessages');
 
-if (!fs.existsSync(DATA_DIR))               fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(UPLOAD_DIR))             fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-if (!fs.existsSync(PRIVATE_GROUP_MSGS_DIR)) fs.mkdirSync(PRIVATE_GROUP_MSGS_DIR, { recursive: true });
+for (const dir of [DATA_DIR, UPLOAD_DIR, PRIVATE_GROUP_MSGS_DIR]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
 
 // ─── Data files ────────────────────────────────────────────────────────────────
 const USERS_FILE           = path.join(DATA_DIR, 'users.json');
@@ -64,10 +64,10 @@ let groupChats = loadJSON(GROUP_CHATS_FILE, []);
 const bannedIPs = new Set(bannedArr);
 
 // normalize user objects
-for (const username in users) {
-  users[username].followers = users[username].followers || [];
-  users[username].following = users[username].following || [];
-  users[username].banned    = users[username].banned    || false;
+for (const u in users) {
+  users[u].followers = users[u].followers || [];
+  users[u].following = users[u].following || [];
+  users[u].banned    = users[u].banned    || false;
 }
 
 // ─── File upload setup ─────────────────────────────────────────────────────────
@@ -102,24 +102,16 @@ app.get('/api/group-chats/messages', (req, res) => {
 
 app.post('/api/group-chats/messages', (req, res) => {
   const username = req.cookies.username;
-  if (!username) {
-    return res.status(401).json({ error: 'unauthenticated' });
-  }
+  if (!username) return res.status(401).json({ error: 'unauthenticated' });
   const { message } = req.body;
   const newMsg = { username, message, timestamp: Date.now() };
   groupChats.push(newMsg);
   fs.writeFileSync(GROUP_CHATS_FILE, JSON.stringify(groupChats, null, 2), 'utf-8');
-
-  // broadcast on WS channel "group"
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({
-        channel: 'group',
-        payload: newMsg
-      }));
+      client.send(JSON.stringify({ channel: 'group', payload: newMsg }));
     }
   });
-
   res.json(newMsg);
 });
 
@@ -155,8 +147,15 @@ app.use((err, req, res, next) => {
   res.status(500).sendFile(path.join(__dirname, 'public/500.html'));
 });
 
-// ─── Start server ───────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Grunt is live on port ${PORT}`);
+// ─── Start server on dynamic AND fixed ports ────────────────────────────────────
+const DYN_PORT = parseInt(process.env.PORT, 10) || 3000;
+server.listen(DYN_PORT, '0.0.0.0', () => {
+  console.log(`🚀 Grunt is live on port ${DYN_PORT}`);
 });
+
+// Also listen on 3000 if it’s not the same, so Railway’s proxy at :3000 won’t hit a wall
+if (DYN_PORT !== 3000) {
+  server.listen(3000, '0.0.0.0', () => {
+    console.log('🚀 Grunt is also listening on port 3000');
+  });
+}
