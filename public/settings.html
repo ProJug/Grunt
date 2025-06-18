@@ -82,5 +82,14 @@
       <a href="/">← Back to Chat</a>
     </div>
   </form>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('saved') === '1') {
+      alert("✅ Password changed successfully!");
+    } else if (params.get('error') === 'wrongpass') {
+      alert("❌ Old password is incorrect.");
+    }
+  </script>
 </body>
 </html>

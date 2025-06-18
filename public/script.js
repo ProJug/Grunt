@@ -1,3 +1,4 @@
+// Load user data and show admin controls
 fetch('/userdata')
   .then(res => res.json())
   .then(data => {
@@ -60,12 +61,20 @@ window.addEventListener('DOMContentLoaded', () => {
         data.messages.forEach(msg => {
           renderMessage(msg.username, msg.message, msg.image, msg.id);
         });
+
       } else if (data.type === 'message') {
         renderMessage(data.username, data.message, data.image, data.id);
+
+      } else if (data.type === 'thread-reply') {
+        // Optionally handle thread replies here if you display them on main feed
+        // For threads you use their own page, so no action here
+
       } else if (data.type === 'notification') {
         showBadge(data.subType);
         console.log('🔔 Notification:', data.subType, 'from', data.from);
+
       } else if (data.type === 'clear-chat') {
+        // Clear the UI chat immediately
         messagesDiv.innerHTML = '';
         logSystem("⚠️ Chat was cleared by Admin");
       }
