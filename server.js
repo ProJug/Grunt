@@ -50,10 +50,10 @@ const IP_BAN_FILE          = path.join(DATA_DIR, 'banned_ips.json');
 const GROUP_CHATS_FILE     = path.join(DATA_DIR, 'groupChats.json');
 const PRIVATE_GROUPS_FILE  = path.join(DATA_DIR, 'privateGroups.json');
 
-ensureFile(USERS_FILE,       {});
-ensureFile(MESSAGES_FILE,    []);
-ensureFile(IP_BAN_FILE,      []);
-ensureFile(GROUP_CHATS_FILE, []);
+ensureFile(USERS_FILE,         {});
+ensureFile(MESSAGES_FILE,      []);
+ensureFile(IP_BAN_FILE,        []);
+ensureFile(GROUP_CHATS_FILE,   []);
 ensureFile(PRIVATE_GROUPS_FILE, []);
 
 // ─── In-memory state ───────────────────────────────────────────────────────────
@@ -64,10 +64,10 @@ let groupChats = loadJSON(GROUP_CHATS_FILE, []);
 const bannedIPs = new Set(bannedArr);
 
 // normalize user objects
-for (const u in users) {
-  users[u].followers = users[u].followers || [];
-  users[u].following = users[u].following || [];
-  users[u].banned    = users[u].banned    || false;
+for (const username in users) {
+  users[username].followers = users[username].followers || [];
+  users[username].following = users[username].following || [];
+  users[username].banned    = users[username].banned    || false;
 }
 
 // ─── File upload setup ─────────────────────────────────────────────────────────
@@ -107,11 +107,13 @@ app.post('/api/group-chats/messages', (req, res) => {
   const newMsg = { username, message, timestamp: Date.now() };
   groupChats.push(newMsg);
   fs.writeFileSync(GROUP_CHATS_FILE, JSON.stringify(groupChats, null, 2), 'utf-8');
+
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({ channel: 'group', payload: newMsg }));
     }
   });
+
   res.json(newMsg);
 });
 
@@ -147,15 +149,8 @@ app.use((err, req, res, next) => {
   res.status(500).sendFile(path.join(__dirname, 'public/500.html'));
 });
 
-// ─── Start server on dynamic AND fixed ports ────────────────────────────────────
-const DYN_PORT = parseInt(process.env.PORT, 10) || 3000;
-server.listen(DYN_PORT, '0.0.0.0', () => {
-  console.log(`🚀 Grunt is live on port ${DYN_PORT}`);
+// ─── Start server ───────────────────────────────────────────────────────────────
+const PORT = 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Grunt is live on port ${PORT}`);
 });
-
-// Also listen on 3000 if it’s not the same, so Railway’s proxy at :3000 won’t hit a wall
-if (DYN_PORT !== 3000) {
-  server.listen(3000, '0.0.0.0', () => {
-    console.log('🚀 Grunt is also listening on port 3000');
-  });
-}
